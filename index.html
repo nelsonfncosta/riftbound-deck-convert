@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deck to CSV</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+
+      .card {
+        width: min(680px, 92vw);
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        margin: 0 0 20px;
+        color: #94a3b8;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      input[type="file"] {
+        flex: 1;
+        min-width: 260px;
+      }
+
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+      }
+
+      button {
+        border: 0;
+        background: #2563eb;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #1d4ed8;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      #status {
+        margin-top: 10px;
+        min-height: 1.4em;
+        font-size: 0.95rem;
+        color: #cbd5e1;
+      }
+
+      code {
+        color: #93c5fd;
+      }
+
+      .example-preview {
+        margin-top: 20px;
+      }
+
+      .example-preview h2 {
+        margin: 0 0 10px;
+        font-size: 1.05rem;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .preview-pane {
+        border: 1px solid #334155;
+        border-radius: 10px;
+        background: #0b1222;
+        padding: 10px;
+      }
+
+      .preview-pane h3 {
+        margin: 0 0 8px;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+      }
+
+      .preview-pane pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.8rem;
+        line-height: 1.35;
+        color: #93c5fd;
+      }
+
+      .support-row {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        margin-top: 0;
+        z-index: 20;
+      }
+
+      .kofi-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #334155;
+        border-radius: 999px;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: #e2e8f0;
+        background: #0b1222;
+        font-size: 0.9rem;
+      }
+
+      .kofi-link:hover {
+        border-color: #60a5fa;
+        background: #111b33;
+      }
+
+      .kofi-link img {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      @media (max-width: 720px) {
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .support-row {
+          top: 8px;
+          right: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Deck to CSV</h1>
+      <p>Upload your deck file, convert it, and download a CSV.</p>
+
+      <div class="row">
+        <input id="deckFile" type="file" />
+      </div>
+
+      <div class="row">
+        <label>
+          <input id="keepSections" type="checkbox" />
+          Keep section column (do not merge duplicate cards)
+        </label>
+      </div>
+
+      <div class="row">
+        <button id="convertButton" type="button">
+          Convert and Download CSV
+        </button>
+      </div>
+
+      <div id="status" role="status" aria-live="polite"></div>
+      <p style="margin-top: 14px">
+        Expected sections: <code>Legend</code>, <code>Champion</code>,
+        <code>MainDeck</code>, <code>Battlefields</code>, <code>Runes</code>.
+      </p>
+
+      <section
+        class="example-preview"
+        aria-label="Example deck conversion preview"
+      >
+        <h2>Example Preview</h2>
+        <div class="preview-grid">
+          <article class="preview-pane">
+            <h3>Deck List</h3>
+            <pre>
+Legend:
+1 Annie, Dark Child
+
+Champion:
+1 Annie, Stubborn
+
+MainDeck:
+3 Disintegrate
+3 Gust
+3 Morbid Return
+3 Mystic Poro
+3 Sai Scout
+3 Sneaky Deckhand
+3 Traveling Merchant
+3 Maddened Marauder
+3 Firestorm
+3 Incinerate
+2 Pouty Poro
+2 Flash
+2 Tibbers
+1 Annie, Stubborn
+2 Annie, Fiery
+
+Battlefields:
+1 Startipped Peak
+1 The Arena's Greatest
+1 Void Gate
+
+Runes:
+6 Fury Rune
+6 Chaos Rune</pre
+            >
+          </article>
+
+          <article class="preview-pane">
+            <h3>CSV Output</h3>
+            <pre>
+Quantity,Name
+1,"Annie, Dark Child"
+2,"Annie, Fiery"
+2,"Annie, Stubborn"
+6,Chaos Rune
+3,Disintegrate
+3,Firestorm
+2,Flash
+6,Fury Rune
+3,Gust
+3,Incinerate
+3,Maddened Marauder
+3,Morbid Return
+3,Mystic Poro
+2,Pouty Poro
+3,Sai Scout
+3,Sneaky Deckhand
+1,Startipped Peak
+1,The Arena's Greatest
+2,Tibbers
+3,Traveling Merchant
+1,Void Gate</pre
+            >
+          </article>
+        </div>
+      </section>
+
+      <div class="support-row">
+        <a
+          class="kofi-link"
+          href="https://ko-fi.com/nelsoncosta"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src="public/coffee.svg" alt="Ko-fi" />
+          Coffee delivery
+        </a>
+      </div>
+    </main>
+
+    <script>
+      function normalizeSectionName(rawSection) {
+        return rawSection.trim().toLowerCase();
+      }
+
+      function parseDeckList(content, keepSections) {
+        const lines = content.split(/\r?\n/);
+        const allowedSections = new Set([
+          "legend",
+          "champion",
+          "maindeck",
+          "battlefields",
+          "runes",
+        ]);
+
+        const totals = new Map();
+        const rows = [];
+        let currentSection = "";
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+
+          if (!line) {
+            continue;
+          }
+
+          const sectionMatch = line.match(/^([^:]+):$/);
+          if (sectionMatch) {
+            currentSection = normalizeSectionName(sectionMatch[1]);
+            continue;
+          }
+
+          const cardMatch = line.match(/^(\d+)\s+(.+)$/);
+          if (!cardMatch) {
+            continue;
+          }
+
+          const quantity = Number(cardMatch[1]);
+          const name = cardMatch[2].trim();
+
+          if (!currentSection) {
+            continue;
+          }
+
+          if (!allowedSections.has(currentSection)) {
+            continue;
+          }
+
+          if (keepSections) {
+            rows.push({ quantity, name, section: currentSection });
+            continue;
+          }
+
+          totals.set(name, (totals.get(name) || 0) + quantity);
+        }
+
+        if (keepSections) {
+          return rows;
+        }
+
+        return [...totals.entries()]
+          .map(([name, quantity]) => ({ quantity, name }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      function escapeCsv(value) {
+        const text = String(value);
+        if (/[",\n]/.test(text)) {
+          return `"${text.replace(/"/g, '""')}"`;
+        }
+        return text;
+      }
+
+      function rowsToCsv(rows, keepSections) {
+        const header = keepSections
+          ? ["Quantity", "Name", "Section"]
+          : ["Quantity", "Name"];
+        const csvLines = [header.join(",")];
+
+        for (const row of rows) {
+          const values = keepSections
+            ? [row.quantity, row.name, row.section]
+            : [row.quantity, row.name];
+          csvLines.push(values.map(escapeCsv).join(","));
+        }
+
+        return `${csvLines.join("\n")}\n`;
+      }
+
+      function downloadCsv(csv, fileName) {
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+      }
+
+      const fileInput = document.getElementById("deckFile");
+      const keepSectionsInput = document.getElementById("keepSections");
+      const convertButton = document.getElementById("convertButton");
+      const status = document.getElementById("status");
+
+      convertButton.addEventListener("click", async () => {
+        const file = fileInput.files && fileInput.files[0];
+
+        if (!file) {
+          status.textContent = "Please choose a deck file first.";
+          return;
+        }
+
+        status.textContent = "Reading file...";
+
+        try {
+          const content = await file.text();
+          const keepSections = keepSectionsInput.checked;
+          const rows = parseDeckList(content, keepSections);
+
+          if (rows.length === 0) {
+            status.textContent =
+              "No deck cards found. Check format and section headers.";
+            return;
+          }
+
+          const csv = rowsToCsv(rows, keepSections);
+          const safeName = file.name.replace(/\.[^.]*$/, "") || "deck";
+          const outputName = `${safeName}.csv`;
+
+          downloadCsv(csv, outputName);
+          status.textContent = `Done! Downloaded ${outputName}.`;
+        } catch (error) {
+          console.error(error);
+          status.textContent = "Could not convert file. Please try again.";
+        }
+      });
+    </script>
+  </body>
+</html>

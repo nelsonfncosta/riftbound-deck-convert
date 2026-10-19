@@ -21,12 +21,12 @@ function normalizeSectionName(rawSection) {
 function parseDeckList(content, keepSections) {
   const lines = content.split(/\r?\n/);
   const allowedSections = new Set([
+    "legend",
     "champion",
     "maindeck",
     "battlefields",
     "runes",
   ]);
-  const ignoredSections = new Set(["legend"]);
 
   const totals = new Map();
   const rows = [];
@@ -53,7 +53,7 @@ function parseDeckList(content, keepSections) {
     const quantity = Number(cardMatch[1]);
     const name = cardMatch[2].trim();
 
-    if (!currentSection || ignoredSections.has(currentSection)) {
+    if (!currentSection) {
       continue;
     }
 
